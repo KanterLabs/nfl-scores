@@ -5,14 +5,24 @@
 **Live NFL scores and a drawn-on-the-field gamecast for GNOME Shell.**<br>
 Press <kbd>Super</kbd> + <kbd>F</kbd> to open it and press it again to close it.
 
-![GNOME Shell 48–50](https://img.shields.io/badge/GNOME_Shell-48–50-4a86cf?logo=gnome&logoColor=white)
-![Wayland](https://img.shields.io/badge/Wayland-ready-6aa84f)
-![No API key](https://img.shields.io/badge/API_key-none_needed-8a95a3)
-![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)
+[![GNOME Shell 48–50](https://img.shields.io/badge/GNOME_Shell-48–50-4a86cf?logo=gnome&logoColor=white)](https://extensions.gnome.org/about/)
+[![Wayland](https://img.shields.io/badge/Wayland-ready-6aa84f)](#requirements)
+[![No API key](https://img.shields.io/badge/API_key-none_needed-8a95a3)](#data-and-network-use)
+[![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 <img src="docs/screenshots/touchdown.gif" alt="A touchdown replayed on the gamecast field: the ball crosses the goal line, the end zone lights up, and a TOUCHDOWN banner pops in" width="720">
 
+[**Install**](#install) · [**Features**](#features) · [**Keyboard**](#keyboard) · [**Data use**](#data-and-network-use) · [**Development**](#development)
+
 </div>
+
+## Quick start
+
+```bash
+git clone https://github.com/KanterLabs/nfl-scores.git && cd nfl-scores && make install
+```
+
+Log out and back in once, then press <kbd>Super</kbd> + <kbd>F</kbd>.
 
 ## Features
 
@@ -81,25 +91,41 @@ The game you had open stays open between presses of <kbd>Super</kbd> + <kbd>F</k
 
 ## Install
 
+### Requirements
+
+- GNOME Shell 48, 49, or 50 (Wayland or X11)
+- `git`, `make`, and `glib-compile-schemas` (ships with GLib)
+
+### Steps
+
 ```bash
-git clone https://github.com/ShaneKanterman04/nfl-scores.git
+git clone https://github.com/KanterLabs/nfl-scores.git
 cd nfl-scores
 make install
 ```
 
 Log out and back in once so GNOME Shell discovers the extension. After that, press <kbd>Super</kbd> + <kbd>F</kbd>.
 
-To update later, pull from GitHub and reload in place with no logout:
+### Updating
+
+Pull from GitHub and reload in place, with no logout:
 
 ```bash
 make update        # or ./scripts/update.sh; refuses to pull over local edits
 ```
 
-To use a different shortcut:
+### Changing the shortcut
 
 ```bash
 gsettings --schemadir ~/.local/share/gnome-shell/extensions/nfl-scores@shanekanterman/schemas \
   set org.gnome.shell.extensions.nfl-scores toggle-scoreboard "['<Super>g']"
+```
+
+### Uninstalling
+
+```bash
+gnome-extensions uninstall nfl-scores@shanekanterman
+rm -rf ~/.cache/nfl-scores
 ```
 
 ## Data and network use
@@ -131,6 +157,9 @@ gjs -m scripts/render-fixtures.js --frames   # play animations as filmstrips
 
 `make screenshots` asks the running extension to photograph its own popup with GNOME Shell's screenshot API. It records a touchdown replay for the GIF above. While it captures, it paints a neutral backdrop behind the popup, so none of your windows end up in the images.
 
+<details>
+<summary><b>Project layout</b></summary>
+
 | File | Role |
 | --- | --- |
 | `extension.js` | Loader and the <kbd>Super</kbd> + <kbd>F</kbd> keybinding |
@@ -141,8 +170,13 @@ gjs -m scripts/render-fixtures.js --frames   # play animations as filmstrips
 | `capture.js` | The screenshot tool behind `make screenshots` |
 | `stylesheet.css` | The glass styling |
 
+</details>
+
 Every ESPN yard line counts from the home team's goal line (0) to the away team's (100). That was checked against the spot text of every play in the saved games.
 
 ## Credits
+
+Built by [KanterLabs](https://github.com/KanterLabs). Released under the [MIT License](LICENSE).
+
 
 Not affiliated with or endorsed by the NFL, ESPN, or any team. Team names, logos, and data belong to their owners and are shown only to display scores.
