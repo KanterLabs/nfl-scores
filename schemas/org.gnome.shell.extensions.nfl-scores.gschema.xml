@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.nfl-scores" path="/org/gnome/shell/extensions/nfl-scores/">
+    <key name="toggle-scoreboard" type="as">
+      <default><![CDATA[['<Super>f']]]></default>
+      <summary>Open or close the scoreboard</summary>
+    </key>
+    <key name="screenshot-dir" type="s">
+      <default>''</default>
+      <summary>Capture README screenshots into this directory</summary>
+      <description>Development only. Setting a path makes the running extension capture its own popup into it, then clear the key. Used by scripts/screenshots.sh.</description>
+    </key>
+  </schema>
+</schemalist>

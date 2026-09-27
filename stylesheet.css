@@ -1,0 +1,697 @@
+/* Same milky glass as the Spotlight and weather popups */
+.nfl-popup {
+    padding: 16px;
+    spacing: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 24px;
+    background-color: rgba(248, 250, 255, 0.74);
+    box-shadow: 0 16px 48px rgba(35, 55, 75, 0.18);
+    color: #1d1d1f;
+    font-family: "Inter", sans-serif;
+}
+
+/* Header */
+.nfl-header {
+    spacing: 10px;
+    padding: 0 4px;
+}
+
+.nfl-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.nfl-subtitle {
+    font-size: 11px;
+    color: #5a6878;
+}
+
+.nfl-live-pill {
+    spacing: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: rgba(214, 59, 59, 0.12);
+    color: #c62f2f;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.nfl-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #d63b3b;
+}
+
+.nfl-updated {
+    font-size: 11px;
+    color: #6b7887;
+}
+
+.nfl-updated.error {
+    color: #c62f2f;
+}
+
+/* Body */
+.nfl-body {
+    spacing: 12px;
+    padding-right: 10px;
+}
+
+.nfl-section-title {
+    padding: 4px 4px 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #6b7887;
+}
+
+.nfl-grid-row {
+    spacing: 12px;
+}
+
+.nfl-empty {
+    padding: 24px 4px;
+    font-size: 13px;
+    color: #5a6878;
+}
+
+/* Game cards */
+.nfl-game {
+    padding: 12px 14px 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background-color: rgba(255, 255, 255, 0.55);
+    color: #1d1d1f;
+    transition-duration: 100ms;
+}
+
+.nfl-game:hover,
+.nfl-game:focus {
+    background-color: rgba(255, 255, 255, 0.82);
+}
+
+/* Finished games recede; live games stay neutral so the grid is not a wall of red. */
+.nfl-game.post {
+    background-color: rgba(255, 255, 255, 0.38);
+}
+
+.nfl-team-row {
+    spacing: 9px;
+    padding: 3px 0;
+}
+
+.nfl-logo {
+    icon-size: 26px;
+}
+
+.nfl-logo-fallback {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 800;
+    text-align: center;
+    padding-top: 8px;
+}
+
+.nfl-team-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.nfl-team-record {
+    font-size: 11px;
+    color: #7a8695;
+}
+
+/* A small football beside the team with the ball */
+.nfl-possession {
+    width: 12px;
+    height: 7px;
+    border-radius: 6px;
+    background-color: #8a5a2b;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.nfl-score {
+    min-width: 28px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 800;
+    font-feature-settings: "tnum";
+    text-align: right;
+}
+
+.nfl-score.scored {
+    background-color: rgba(255, 196, 0, 0.32);
+}
+
+.nfl-team-row.trailing .nfl-team-name,
+.nfl-team-row.trailing .nfl-score {
+    color: #5a6878;
+}
+
+.nfl-team-row.lost .nfl-team-name,
+.nfl-team-row.lost .nfl-score {
+    color: #8a95a3;
+    font-weight: 500;
+}
+
+.nfl-status {
+    spacing: 7px;
+    padding-top: 8px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(84, 112, 142, 0.14);
+}
+
+.nfl-status-text {
+    font-size: 11px;
+    color: #5a6878;
+}
+
+.nfl-status-clock {
+    font-size: 11px;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+    color: #2b3440;
+}
+
+.nfl-game.in .nfl-status-clock {
+    color: #c62f2f;
+}
+
+.nfl-redzone-tag {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background-color: rgba(214, 59, 59, 0.14);
+    color: #c62f2f;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+/* ----- Game detail ----- */
+.nfl-detail-nav {
+    padding: 0 2px;
+}
+
+.nfl-nav-button {
+    padding: 5px 12px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    color: #2b3440;
+    font-size: 12px;
+    font-weight: 600;
+    transition-duration: 100ms;
+}
+
+.nfl-nav-button:hover,
+.nfl-nav-button:focus {
+    background-color: rgba(255, 255, 255, 0.85);
+}
+
+.nfl-hero {
+    padding: 18px 16px;
+    spacing: 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.62);
+}
+
+.nfl-hero-team {
+    spacing: 4px;
+}
+
+.nfl-hero-name-row {
+    spacing: 6px;
+}
+
+.nfl-hero-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.nfl-hero-record {
+    font-size: 11px;
+    color: #7a8695;
+}
+
+.nfl-hero-score {
+    min-width: 64px;
+    font-size: 40px;
+    font-weight: 800;
+    font-feature-settings: "tnum";
+    text-align: center;
+}
+
+.nfl-hero-score.trailing {
+    color: #5a6878;
+}
+
+.nfl-hero-score.lost {
+    color: #8a95a3;
+    font-weight: 600;
+}
+
+.nfl-hero-center {
+    width: 150px;
+    spacing: 4px;
+}
+
+.nfl-hero-status-row {
+    spacing: 6px;
+}
+
+.nfl-hero-status {
+    font-size: 14px;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+    color: #2b3440;
+}
+
+.nfl-hero.in .nfl-hero-status {
+    color: #c62f2f;
+}
+
+.nfl-hero-sub {
+    font-size: 11px;
+    color: #5a6878;
+    text-align: center;
+}
+
+.nfl-detail-card {
+    padding: 12px 14px;
+    spacing: 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background-color: rgba(255, 255, 255, 0.55);
+}
+
+.nfl-card-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #6b7887;
+}
+
+.nfl-card-caption {
+    font-size: 11px;
+    color: #6b7887;
+}
+
+/* Linescore */
+.nfl-linescore {
+    spacing: 4px;
+}
+
+.nfl-ls-row {
+    spacing: 0;
+}
+
+.nfl-ls-row.head .nfl-ls-cell {
+    font-size: 10px;
+    font-weight: 700;
+    color: #7a8695;
+}
+
+.nfl-ls-team {
+    spacing: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.nfl-ls-cell {
+    width: 44px;
+    font-size: 13px;
+    font-feature-settings: "tnum";
+    text-align: center;
+    color: #2b3440;
+}
+
+.nfl-ls-cell.total {
+    width: 52px;
+    font-weight: 800;
+    color: #1d1d1f;
+}
+
+/* Split bars (win probability, team stats) */
+.nfl-prob-labels {
+    spacing: 8px;
+}
+
+.nfl-prob-value {
+    font-size: 13px;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+}
+
+.nfl-prob-bar {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.nfl-stat-bar {
+    height: 4px;
+    border-radius: 2px;
+}
+
+.nfl-split-away {
+    border-radius: 4px 0 0 4px;
+}
+
+.nfl-split-home {
+    border-radius: 0 4px 4px 0;
+}
+
+/* Current drive */
+.nfl-drive-row {
+    spacing: 8px;
+}
+
+.nfl-drive-summary {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.nfl-drive-play {
+    font-size: 12px;
+    color: #2b3440;
+}
+
+/* Matchup (before kickoff) */
+.nfl-matchup-row {
+    spacing: 6px;
+}
+
+.nfl-matchup-label {
+    width: 90px;
+    spacing: 8px;
+    font-size: 12px;
+    color: #5a6878;
+}
+
+.nfl-matchup-value {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.nfl-form-chip {
+    width: 20px;
+    padding: 2px 0;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.nfl-form-chip.win {
+    background-color: rgba(46, 140, 87, 0.16);
+    color: #22794a;
+}
+
+.nfl-form-chip.loss {
+    background-color: rgba(214, 59, 59, 0.12);
+    color: #c62f2f;
+}
+
+.nfl-form-chip.tie {
+    background-color: rgba(84, 112, 142, 0.14);
+    color: #5a6878;
+}
+
+/* Scoring plays */
+.nfl-scoring-row {
+    spacing: 10px;
+    padding: 4px 0;
+}
+
+.nfl-scoring-meta {
+    font-size: 10px;
+    font-weight: 700;
+    color: #7a8695;
+}
+
+.nfl-scoring-text {
+    font-size: 12px;
+    color: #2b3440;
+}
+
+.nfl-scoring-score {
+    font-size: 12px;
+    font-weight: 800;
+    font-feature-settings: "tnum";
+}
+
+/* Team stats */
+.nfl-stat-head {
+    padding-bottom: 2px;
+}
+
+.nfl-stat-row {
+    spacing: 4px;
+    padding: 3px 0;
+}
+
+.nfl-stat-value {
+    font-size: 12px;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+}
+
+.nfl-stat-label {
+    font-size: 11px;
+    color: #6b7887;
+}
+
+/* Leaders */
+.nfl-leader-category {
+    padding-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #5a6878;
+}
+
+.nfl-leader {
+    spacing: 8px;
+}
+
+.nfl-leader-name {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.nfl-leader-line {
+    font-size: 11px;
+    color: #5a6878;
+}
+
+.nfl-where {
+    padding: 2px 4px 4px;
+    font-size: 11px;
+    color: #7a8695;
+    text-align: center;
+}
+
+/* ----- Tabs ----- */
+.nfl-tabs {
+    padding: 3px;
+    spacing: 2px;
+    border-radius: 999px;
+    background-color: rgba(84, 112, 142, 0.12);
+}
+
+.nfl-tab {
+    padding: 4px 14px;
+    border-radius: 999px;
+    color: #5a6878;
+    font-size: 12px;
+    font-weight: 600;
+    transition-duration: 120ms;
+}
+
+.nfl-tab:hover {
+    color: #1d1d1f;
+}
+
+.nfl-tab:checked {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #1d1d1f;
+    box-shadow: 0 1px 4px rgba(35, 55, 75, 0.14);
+}
+
+/* ----- Gamecast ----- */
+.nfl-legend {
+    spacing: 14px;
+    padding: 0 6px;
+}
+
+.nfl-legend-item {
+    spacing: 5px;
+    font-size: 10px;
+    color: #5a6878;
+}
+
+.nfl-legend-swatch {
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.nfl-legend-swatch.scrimmage { background-color: #3b82f6; }
+.nfl-legend-swatch.first-down { background-color: #f9c71a; }
+
+.nfl-legend-swatch.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 4px;
+    background-color: #ffffff;
+    border: 1.5px solid;
+}
+
+.nfl-legend-swatch.dot.gain { border-color: #2e9e5c; }
+.nfl-legend-swatch.dot.loss { border-color: #d63b3b; }
+.nfl-legend-swatch.dot.penalty { border-color: #f9c71a; }
+
+.nfl-card-title-value {
+    font-size: 11px;
+    font-weight: 800;
+    color: #2b3440;
+}
+
+.nfl-detail-card.flush {
+    padding: 12px 0 10px;
+}
+
+.nfl-detail-card.flush .nfl-card-title {
+    padding-left: 14px;
+}
+
+/* Plays */
+.nfl-drive-button {
+    margin-top: 4px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    background-color: rgba(84, 112, 142, 0.07);
+    transition-duration: 100ms;
+}
+
+.nfl-drive-button:hover,
+.nfl-drive-button:focus {
+    background-color: rgba(84, 112, 142, 0.14);
+}
+
+.nfl-drive-header {
+    spacing: 8px;
+}
+
+.nfl-drive-team {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d1d1f;
+}
+
+.nfl-drive-result {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background-color: rgba(84, 112, 142, 0.14);
+    color: #3d4b5c;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.nfl-drive-result.good { background-color: rgba(46, 140, 87, 0.16); color: #22794a; }
+.nfl-drive-result.bad { background-color: rgba(214, 59, 59, 0.12); color: #c62f2f; }
+.nfl-drive-result.now { background-color: rgba(214, 59, 59, 0.9); color: #ffffff; }
+
+.nfl-drive-description {
+    font-size: 11px;
+    color: #6b7887;
+}
+
+.nfl-drive-chevron {
+    font-size: 11px;
+    color: #6b7887;
+}
+
+.nfl-play-row {
+    spacing: 10px;
+    padding: 7px 8px;
+    border-bottom: 1px solid rgba(84, 112, 142, 0.08);
+}
+
+.nfl-play-row.touchdown,
+.nfl-play-row.score {
+    border-radius: 10px;
+    background-color: rgba(238, 168, 26, 0.14);
+}
+
+.nfl-play-row.turnover {
+    border-radius: 10px;
+    background-color: rgba(214, 59, 59, 0.08);
+}
+
+.nfl-play-left {
+    width: 66px;
+    spacing: 1px;
+}
+
+.nfl-play-down {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2b3440;
+}
+
+.nfl-play-clock {
+    font-size: 10px;
+    font-feature-settings: "tnum";
+    color: #7a8695;
+}
+
+.nfl-play-tag {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #7a8695;
+}
+
+.nfl-play-tag.touchdown,
+.nfl-play-tag.score { color: #b77c0c; }
+.nfl-play-tag.turnover,
+.nfl-play-tag.sack { color: #c62f2f; }
+.nfl-play-tag.penalty { color: #b8900a; }
+.nfl-play-tag.pass { color: #3b6fb6; }
+.nfl-play-tag.rush { color: #2e7d55; }
+
+.nfl-play-text {
+    font-size: 12px;
+    color: #1d1d1f;
+}
+
+.nfl-play-yards {
+    min-width: 34px;
+    font-size: 13px;
+    font-weight: 800;
+    font-feature-settings: "tnum";
+    text-align: right;
+}
+
+.nfl-play-yards.gain { color: #22794a; }
+.nfl-play-yards.loss { color: #c62f2f; }
+
+/* A play that just arrived while watching, and a score that just changed. */
+.nfl-play-row.fresh {
+    border-radius: 10px;
+    background-color: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.nfl-hero-score.scored {
+    border-radius: 14px;
+    background-color: rgba(255, 196, 0, 0.3);
+}
