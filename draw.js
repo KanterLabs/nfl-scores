@@ -202,6 +202,9 @@ export function drawField(f, cr, w, h) {
     if (anim)
         drawPlayEffects(f, anim, cr, w, h, x, tdLeft);
 
+    if (s.pending && !s.banner)
+        drawPendingTag(cr, w, f.pulse ?? 0);
+
     if (s.banner) {
         const layout = textLayout(cr, s.banner, 'Inter Heavy 13');
         const [tw, th] = layout.get_pixel_size();
@@ -228,6 +231,35 @@ export function drawField(f, cr, w, h) {
     cr.setSourceRGBA(1, 1, 1, 0.75);
     cr.setLineWidth(1);
     cr.stroke();
+}
+
+// The field shows the scoreboard's new spot, but the play that got there
+// hasn't reached the play-by-play yet. pulse (0-1) throbs the dot.
+function drawPendingTag(cr, w, pulse) {
+    const layout = textLayout(cr, 'WAITING FOR PLAY DETAILS', 'Inter Heavy 8');
+    const [tw, th] = layout.get_pixel_size();
+    const dot = 3;
+    const pw = tw + dot * 2 + 22;
+    const ph = th + 6;
+    const px = w / 2 - pw / 2;
+    const py = 5;
+    roundedRect(cr, px, py, pw, ph, ph / 2);
+    cr.setSourceRGBA(1, 1, 1, 0.92);
+    cr.fill();
+
+    const cx = px + 9 + dot;
+    const cy = py + ph / 2;
+    const throb = Math.sin(pulse * Math.PI);
+    cr.setSourceRGBA(0.84, 0.23, 0.23, 0.25 * (1 - throb));
+    cr.arc(cx, cy, dot + 3 * throb, 0, 2 * Math.PI);
+    cr.fill();
+    cr.setSourceRGBA(0.84, 0.23, 0.23, 1);
+    cr.arc(cx, cy, dot, 0, 2 * Math.PI);
+    cr.fill();
+
+    cr.setSourceRGBA(...INK, 1);
+    cr.moveTo(cx + dot + 6, py + 3);
+    PangoCairo.show_layout(cr, layout);
 }
 
 function drawEndZone(cr, left, width, h, team, rotation, glow) {

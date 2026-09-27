@@ -25,11 +25,14 @@ const FieldView = GObject.registerClass({GTypeName: `NflFieldView_${BUILD}`},
 class FieldView extends St.DrawingArea {
     _init({width, height, away, home}) {
         super._init({style_class: 'nfl-field', width, height});
-        this._props = {away, home, homeLogoPath: null, state: {}, anim: null};
+        this._props = {away, home, homeLogoPath: null, state: {}, anim: null, pulse: 0};
         this._timeline = null;
+        this._pulse = null;
         this.connect('destroy', () => {
             this._timeline?.stop();
             this._timeline = null;
+            this._pulse?.stop();
+            this._pulse = null;
         });
     }
 
@@ -41,11 +44,33 @@ class FieldView extends St.DrawingArea {
     }
 
     // state: {ballYL, offenseId, down, distance, callout, redZone, banner,
-    //         drive: {startYL, plays}}. Leaves a running animation alone; it
-    // already ends on this state.
+    //         drive: {startYL, plays}, pending}. Leaves a running animation
+    // alone; it already ends on this state.
     setState(state) {
         this._props.state = state;
+        this._syncPulse();
         this.queue_repaint();
+    }
+
+    // Throb the "play in progress" dot only while it is showing.
+    _syncPulse() {
+        const pending = Boolean(this._props.state.pending);
+        if (pending === Boolean(this._pulse))
+            return;
+        if (!pending) {
+            this._pulse.stop();
+            this._pulse = null;
+            this._props.pulse = 0;
+            return;
+        }
+        this._pulse = new Clutter.Timeline({actor: this, duration: 1200, repeat_count: -1});
+        this._pulse.connect('new-frame', timeline => {
+            this._props.pulse = timeline.get_progress();
+            // A running play animation already repaints every frame.
+            if (!this._timeline)
+                this.queue_repaint();
+        });
+        this._pulse.start();
     }
 
     // Animate one play from the field before it (from) to after it (to).
@@ -54,6 +79,7 @@ class FieldView extends St.DrawingArea {
         const props = this._props;
         props.state = to;
         props.anim = {from, play, event, progress: 0};
+        this._syncPulse();
 
         let duration = 2000;
         if (event.banner === 'TOUCHDOWN')

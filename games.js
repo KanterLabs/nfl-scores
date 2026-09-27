@@ -385,10 +385,10 @@ function ordinal(n) {
 // banner between plays. Also returns the latest play so the caller can
 // animate it once.
 //
-// The next snap comes from the latest play's end (down, distance, spot) rather
-// than the scoreboard, so the ball never moves before the play that moved it
-// has arrived. Scores reset the ball for the kick, so those fall back to the
-// scoreboard.
+// The next snap comes from the latest play's end (down, distance, spot), which
+// keeps the field in step with the play list. When the scoreboard is already
+// past that play, its spot wins and state.pending is set until the play
+// arrives. Scores reset the ball for the kick, so those use the scoreboard.
 export function fieldState(game, gamecast) {
     const drives = gamecast?.drives ?? [];
     const lastPlay = drives.at(-1)?.plays.at(-1) ?? null;
@@ -400,11 +400,21 @@ export function fieldState(game, gamecast) {
 
     const fromPlay = lastPlay && Number.isFinite(lastPlay.endYL) && lastPlay.endTeamId &&
         !['touchdown', 'score'].includes(lastPlay.kind);
-    const snap = fromPlay
+    const playSnap = fromPlay
         ? {yardLine: lastPlay.endYL, down: lastPlay.endDown, distance: lastPlay.endDistance, possession: lastPlay.endTeamId}
-        : game.spot;
+        : null;
+    // The scorebug can move on before the play that moved it reaches the
+    // play-by-play. Show its spot right away and flag the play as pending.
+    const pending = Boolean(playSnap) && spotAhead(game.spot, playSnap);
+    const snap = playSnap && !pending ? playSnap : game.spot;
 
-    return {state: snapState(game, drives, snap), lastPlay};
+    return {state: {...snapState(game, drives, snap), pending}, lastPlay};
+}
+
+function spotAhead(spot, snap) {
+    const differs = (a, b) => a != null && b != null && String(a) !== String(b);
+    return differs(spot.yardLine, snap.yardLine) || differs(spot.down, snap.down) ||
+        differs(spot.distance, snap.distance) || differs(spot.possession, snap.possession);
 }
 
 // Where the ball sat before a play, for animating a play seen for the first
@@ -503,5 +513,5 @@ export function replayStates(game, gamecast, play) {
             .map(d => ({...d, current: d.plays.some(p => p.id === play.id), plays: d.plays.filter(p => plays.indexOf(p) <= index)}))
             .filter(d => d.plays.length),
     };
-    return {from: stateBeforePlay(rewound, upTo, play), to: fieldState(rewound, upTo).state};
+    return {from: stateBeforePlay(rewound, upTo, play), to: {...fieldState(rewound, upTo).state, pending: false}};
 }

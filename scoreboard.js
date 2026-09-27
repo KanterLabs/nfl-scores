@@ -22,6 +22,8 @@ const SCOREBOARD_URL = 'https://site.web.api.espn.com/apis/site/v2/sports/footba
 const LIVE_REFRESH_SECONDS = 20;
 // A live game's gamecast wants new plays sooner.
 const GAMECAST_REFRESH_SECONDS = 15;
+// The scorebug is ahead of the play-by-play; check back soon for the play.
+const PENDING_REFRESH_SECONDS = 5;
 // While a live gamecast is open, a ~2 KB play count is checked this often and
 // a new play triggers an immediate refresh. ESPN caches it for 10 seconds.
 const PLAY_CHECK_SECONDS = 5;
@@ -142,6 +144,7 @@ export class Scoreboard {
         this._playCounts = new Map();
         this._field = null;
         this._fieldGameId = null;
+        this._fieldPending = false;
 
         this._buildUi();
 
@@ -482,7 +485,7 @@ export class Scoreboard {
         const open = this._gameId && this._data?.games.find(g => g.id === this._gameId);
         let seconds = live ? LIVE_REFRESH_SECONDS : IDLE_REFRESH_SECONDS;
         if (open?.state === 'in' && this._tabFor(open) === 'gamecast')
-            seconds = GAMECAST_REFRESH_SECONDS;
+            seconds = this._fieldPending ? PENDING_REFRESH_SECONDS : GAMECAST_REFRESH_SECONDS;
         this._updatePlayCheck(open);
         this._timerId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, seconds, () => {
                 this._timerId = null;
@@ -741,6 +744,7 @@ export class Scoreboard {
         const field = this._fieldFor(game);
         field.setHomeLogo(this._logos.path(game.home.abbr));
         const {state, lastPlay} = fieldState(game, gamecast);
+        this._fieldPending = state.pending;
         this._showFieldState(game, gamecast, field, state, lastPlay);
         this._body.add_child(field);
         this._body.add_child(this._buildFieldLegend(state));
@@ -816,7 +820,9 @@ export class Scoreboard {
             return;
         }
 
-        const from = shown?.state && Number.isFinite(shown.state.ballYL)
+        // A pending field already jumped to the scoreboard's spot, so replay
+        // the play from its own start.
+        const from = shown?.state && Number.isFinite(shown.state.ballYL) && !shown.state.pending
             ? shown.state
             : stateBeforePlay(game, gamecast, lastPlay);
         field.playTransition(from, state, lastPlay, playEvent(lastPlay));
