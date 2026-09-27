@@ -89,6 +89,12 @@ make install
 
 Log out and back in once so GNOME Shell discovers the extension. After that, press <kbd>Super</kbd> + <kbd>F</kbd>.
 
+To update later, pull from GitHub and reload in place with no logout:
+
+```bash
+make update        # or ./scripts/update.sh; refuses to pull over local edits
+```
+
 To use a different shortcut:
 
 ```bash

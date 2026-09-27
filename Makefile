@@ -1,7 +1,10 @@
-.PHONY: install reload check-live lint render screenshots
+.PHONY: install reload update check-live lint render screenshots
 
 install reload:
 	./scripts/install.sh
+
+update:
+	./scripts/update.sh
 
 check-live:
 	node scripts/check-live.mjs
