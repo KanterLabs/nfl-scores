@@ -1,0 +1,69 @@
+name: Mirror canonical release to GitHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Canonical semantic release version to mirror (without v)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nfl-scores-mirror-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Relay verified canonical release
+    if: >-
+      github.repository == 'KanterLabs/nfl-scores' &&
+      github.event.repository.full_name == 'KanterLabs/nfl-scores' &&
+      github.ref == 'refs/heads/main'
+    runs-on: homelab
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the protected GitHub main adapter
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate the trusted caller context
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          EVENT_REPOSITORY: ${{ github.event.repository.full_name }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$GITHUB_REPOSITORY" = "KanterLabs/nfl-scores" ]]
+          [[ "$EVENT_REPOSITORY" = "KanterLabs/nfl-scores" ]]
+          [[ "$GITHUB_REF" = "refs/heads/main" ]]
+          [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]
+          [[ "$(git rev-parse --show-toplevel)" = "$GITHUB_WORKSPACE" ]]
+
+      - name: Relay the verified canonical bundle
+        env:
+          GH_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$RUNNER_TEMP/nfl-scores-mirror"
+          python3 ci/mirror-release.py \
+            --repository KanterLabs/nfl-scores \
+            --version "$RELEASE_VERSION" \
+            --receipt-output "$RUNNER_TEMP/nfl-scores-mirror/receipt.json" \
+            | tee "$RUNNER_TEMP/nfl-scores-mirror/result.json"
+
+      - name: Retain the sanitized mirror receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nfl-scores-mirror-${{ inputs.version }}
+          path: ${{ runner.temp }}/nfl-scores-mirror/
+          if-no-files-found: ignore
+          retention-days: 7
