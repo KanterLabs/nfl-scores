@@ -656,6 +656,14 @@ def mirror(args: argparse.Namespace) -> dict[str, Any]:
             manifest_size=len(sidecar_bytes),
             targets=manifest["targets"],
         )
+        verify_summary = {
+            "ok": True,
+            "command": "verify",
+            "repository": repository,
+            "tag": tag,
+            "commit": manifest["release"]["commit"],
+            "targets": len(manifest["targets"]),
+        }
         result = {
             "ok": True,
             "command": "mirror-release",
@@ -665,7 +673,7 @@ def mirror(args: argparse.Namespace) -> dict[str, Any]:
             "source_commit": manifest["release"]["commit"],
             "manifest_sha256": manifest_sha256,
             "canonical_assets": downloaded,
-            "verified": verify,
+            "verified": verify_summary,
             "public": True,
             "assets": published["assets"],
             "manifest_asset": published["manifest_asset"],
