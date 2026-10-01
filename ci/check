@@ -17,8 +17,9 @@ node scripts/check-fixtures.mjs
 for file in ci/check ci/package ci/test-artifact scripts/*.sh; do
     [[ -f "$file" ]] && bash -n "$file"
 done
-python3 -m py_compile scripts/package-extension.py scripts/validate-release-config.py scripts/verify-artifact.py
+python3 -m py_compile scripts/check-workflows.py scripts/package-extension.py scripts/validate-release-config.py scripts/verify-artifact.py
 python3 scripts/verify-artifact.py --self-test
+python3 scripts/check-workflows.py
 
 if [[ -f ci/release-tools.py ]]; then
     echo 'shared release tool is vendored; parent integration may add its schema check here' >&2

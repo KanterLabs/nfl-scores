@@ -65,20 +65,22 @@ jobs:
           [[ "$RELEASE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'release_ref must be a lower-case 40-character SHA' >&2; exit 2; }
           test "$(git rev-parse HEAD)" = "$RELEASE_REF"
           expected_version=$(python3 -c 'import json; print(json.load(open("ci/runtime.json", encoding="utf-8"))["version"])')
-          test "$RELEASE_VERSION" = "$expected_version"
+          release_version="$RELEASE_VERSION"
           if [[ "${{ github.event_name }}" == push ]]; then
             test "${{ github.ref_name }}" = "v$expected_version"
+            release_version=${RELEASE_VERSION#v}
           fi
+          test "$release_version" = "$expected_version"
           python3 scripts/validate-release-config.py
           printf 'source_sha=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          printf 'version=%s\n' "$expected_version" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$release_version" >> "$GITHUB_OUTPUT"
           printf 'publish=%s\n' "$PUBLISH_REQUESTED" >> "$GITHUB_OUTPUT"
 
   package:
     if: vars.NFL_SCORES_CANONICAL_FORGE == 'github'
     needs: plan
     runs-on: homelab
-    timeout-minutes: 15
+    timeout-minutes: 10
     container:
       image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
     steps:
@@ -88,7 +90,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             ca-certificates git nodejs python3 libglib2.0-bin gnome-shell
       - name: Check out planned revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           fetch-depth: 0
@@ -137,7 +139,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             ca-certificates git nodejs python3 libglib2.0-bin gnome-shell
       - name: Check out planned revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           fetch-depth: 0
@@ -162,7 +164,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out planned revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           fetch-depth: 0
@@ -194,7 +196,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out planned revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           fetch-depth: 0
@@ -252,7 +254,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             ca-certificates git nodejs python3 libglib2.0-bin gnome-shell
       - name: Check out planned revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           fetch-depth: 0
@@ -288,7 +290,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             ca-certificates git python3
       - name: Check out planned revision
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           fetch-depth: 0
