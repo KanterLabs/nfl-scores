@@ -1,0 +1,309 @@
+name: NFL Scores release (mirror)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Exact 40-character commit SHA to package
+        required: true
+        type: string
+      version:
+        description: Semantic release version; must match ci/runtime.json
+        required: true
+        default: 0.1.0
+        type: string
+      publish:
+        description: Publish the verified ZIP through GitHub
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nfl-scores-release-${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_CONFIG: ci/release.json
+
+jobs:
+  plan:
+    if: vars.NFL_SCORES_CANONICAL_FORGE == 'github'
+    runs-on: homelab
+    timeout-minutes: 5
+    container:
+      image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
+    outputs:
+      source_sha: ${{ steps.identity.outputs.source_sha }}
+      version: ${{ steps.identity.outputs.version }}
+      publish: ${{ steps.identity.outputs.publish }}
+    steps:
+      - name: Install plan tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git python3
+      - name: Check out the exact release revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event_name == 'push' && github.sha || inputs.release_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate source, tag, and release contract
+        id: identity
+        env:
+          RELEASE_VERSION: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+          RELEASE_REF: ${{ github.event_name == 'push' && github.sha || inputs.release_ref }}
+          PUBLISH_REQUESTED: ${{ github.event_name == 'push' && 'true' || inputs.publish }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$RELEASE_REF" =~ ^[0-9a-f]{40}$ ]] || { echo 'release_ref must be a lower-case 40-character SHA' >&2; exit 2; }
+          test "$(git rev-parse HEAD)" = "$RELEASE_REF"
+          expected_version=$(python3 -c 'import json; print(json.load(open("ci/runtime.json", encoding="utf-8"))["version"])')
+          test "$RELEASE_VERSION" = "$expected_version"
+          if [[ "${{ github.event_name }}" == push ]]; then
+            test "${{ github.ref_name }}" = "v$expected_version"
+          fi
+          python3 scripts/validate-release-config.py
+          printf 'source_sha=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$expected_version" >> "$GITHUB_OUTPUT"
+          printf 'publish=%s\n' "$PUBLISH_REQUESTED" >> "$GITHUB_OUTPUT"
+
+  package:
+    if: vars.NFL_SCORES_CANONICAL_FORGE == 'github'
+    needs: plan
+    runs-on: homelab
+    timeout-minutes: 15
+    container:
+      image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
+    steps:
+      - name: Install package tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git nodejs python3 libglib2.0-bin gnome-shell
+      - name: Check out planned revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build and verify the exact release bundle
+        env:
+          RELEASE_VERSION: ${{ needs.plan.outputs.version }}
+          RELEASE_SHA: ${{ needs.plan.outputs.source_sha }}
+        run: |
+          set -Eeuo pipefail
+          candidate="$RUNNER_TEMP/nfl-scores-candidate"
+          artifacts="$candidate/artifacts"
+          mkdir -p "$artifacts"
+          output="$artifacts/nfl-scores@shanekanterman.shell-extension.zip"
+          ./ci/check
+          ./ci/package --output "$output"
+          ./ci/test-artifact "$output"
+          ./ci/test-artifact --self-test
+          python3 ci/release-tools.py manifest \
+            --config "$RELEASE_CONFIG" \
+            --artifacts "$artifacts" \
+            --version "$RELEASE_VERSION" \
+            --commit "$RELEASE_SHA" \
+            --output "$candidate/manifest.json"
+          python3 ci/release-tools.py verify \
+            --manifest "$candidate/manifest.json" \
+            --artifacts "$artifacts"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nfl-scores-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/nfl-scores-candidate/
+          if-no-files-found: error
+          retention-days: 7
+
+  artifact-test-ubuntu:
+    if: vars.NFL_SCORES_CANONICAL_FORGE == 'github'
+    needs: [plan, package]
+    runs-on: homelab-heavy
+    timeout-minutes: 25
+    container:
+      image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
+    steps:
+      - name: Install artifact-test tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git nodejs python3 libglib2.0-bin gnome-shell
+      - name: Check out planned revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download the candidate bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nfl-scores-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/nfl-scores-candidate
+      - name: Test the downloaded ZIP and manifest
+        run: |
+          ./ci/test-artifact "$RUNNER_TEMP/nfl-scores-candidate/artifacts/nfl-scores@shanekanterman.shell-extension.zip"
+          python3 ci/release-tools.py verify \
+            --manifest "$RUNNER_TEMP/nfl-scores-candidate/manifest.json" \
+            --artifacts "$RUNNER_TEMP/nfl-scores-candidate/artifacts"
+
+  runtime-ubuntu:
+    name: Ubuntu 26.04 / GNOME 50 runtime harness
+    if: vars.NFL_SCORES_CANONICAL_FORGE == 'github' && vars.NFL_SCORES_UBUNTU_GNOME_HARNESS == 'ready'
+    needs: [plan, package]
+    runs-on: homelab-heavy
+    timeout-minutes: 25
+    steps:
+      - name: Check out planned revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download the candidate bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nfl-scores-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/nfl-scores-candidate
+      - name: Run the parent Ubuntu GNOME harness
+        env:
+          HARNESS_COMMAND: ${{ vars.NFL_SCORES_UBUNTU_GNOME_HARNESS_COMMAND }}
+          RELEASE_VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          test -n "$HARNESS_COMMAND" || { echo 'Ubuntu GNOME harness command is not configured' >&2; exit 2; }
+          read -r -a command <<< "$HARNESS_COMMAND"
+          "${command[@]}" --run \
+            --artifact "$RUNNER_TEMP/nfl-scores-candidate/artifacts/nfl-scores@shanekanterman.shell-extension.zip" \
+            --artifact-root "$RUNNER_TEMP/nfl-scores-candidate/artifacts" \
+            --artifact-type gnome-zip \
+            --version "$RELEASE_VERSION" \
+            --expected-uuid nfl-scores@shanekanterman
+
+  runtime-fedora:
+    name: Fedora Workstation 43 / GNOME 49 runtime harness
+    if: vars.NFL_SCORES_CANONICAL_FORGE == 'github' && vars.NFL_SCORES_FEDORA_GNOME_HARNESS == 'ready'
+    needs: [plan, package]
+    runs-on: homelab-heavy
+    timeout-minutes: 25
+    steps:
+      - name: Check out planned revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download the candidate bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nfl-scores-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/nfl-scores-candidate
+      - name: Run the parent Fedora GNOME harness
+        env:
+          HARNESS_COMMAND: ${{ vars.NFL_SCORES_FEDORA_GNOME_HARNESS_COMMAND }}
+          RELEASE_VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          test -n "$HARNESS_COMMAND" || { echo 'Fedora GNOME harness command is not configured' >&2; exit 2; }
+          read -r -a command <<< "$HARNESS_COMMAND"
+          "${command[@]}" --run \
+            --artifact "$RUNNER_TEMP/nfl-scores-candidate/artifacts/nfl-scores@shanekanterman.shell-extension.zip" \
+            --artifact-root "$RUNNER_TEMP/nfl-scores-candidate/artifacts" \
+            --artifact-type gnome-zip \
+            --version "$RELEASE_VERSION" \
+            --expected-uuid nfl-scores@shanekanterman
+
+  ci-gate:
+    if: always() && vars.NFL_SCORES_CANONICAL_FORGE == 'github'
+    needs: [plan, package, artifact-test-ubuntu, runtime-ubuntu, runtime-fedora]
+    runs-on: homelab
+    timeout-minutes: 5
+    steps:
+      - name: Require every release target
+        env:
+          PLAN: ${{ needs.plan.result }}
+          PACKAGE: ${{ needs.package.result }}
+          ARTIFACT: ${{ needs.artifact-test-ubuntu.result }}
+          UBUNTU: ${{ needs.runtime-ubuntu.result }}
+          FEDORA: ${{ needs.runtime-fedora.result }}
+        run: |
+          test "$PLAN" = success
+          test "$PACKAGE" = success
+          test "$ARTIFACT" = success
+          test "$UBUNTU" = success || { echo 'Ubuntu GNOME harness is not ready or failed' >&2; exit 1; }
+          test "$FEDORA" = success || { echo 'Fedora GNOME harness is not ready or failed' >&2; exit 1; }
+
+  release-gate:
+    if: needs.ci-gate.result == 'success'
+    needs: [plan, ci-gate]
+    runs-on: homelab
+    timeout-minutes: 5
+    container:
+      image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
+    steps:
+      - name: Install release-gate tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git nodejs python3 libglib2.0-bin gnome-shell
+      - name: Check out planned revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download the tested bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nfl-scores-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/nfl-scores-candidate
+      - name: Verify the same bytes that passed every target
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ needs.plan.outputs.source_sha }}"
+          ./ci/test-artifact "$RUNNER_TEMP/nfl-scores-candidate/artifacts/nfl-scores@shanekanterman.shell-extension.zip"
+          python3 ci/release-tools.py verify \
+            --manifest "$RUNNER_TEMP/nfl-scores-candidate/manifest.json" \
+            --artifacts "$RUNNER_TEMP/nfl-scores-candidate/artifacts"
+
+  publish-github:
+    if: needs.release-gate.result == 'success' && needs.plan.outputs.publish == 'true'
+    needs: [plan, release-gate]
+    runs-on: homelab
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    container:
+      image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
+    env:
+      GH_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Install publisher tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git python3
+      - name: Check out planned revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download the exact tested bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: nfl-scores-release-${{ github.run_id }}
+          path: ${{ runner.temp }}/nfl-scores-candidate
+      - name: Publish through the shared GitHub adapter
+        run: |
+          python3 ci/release-tools.py ensure-release \
+            --forge github \
+            --repository KanterLabs/nfl-scores \
+            --api-url https://api.github.com \
+            --manifest "$RUNNER_TEMP/nfl-scores-candidate/manifest.json" \
+            --artifacts "$RUNNER_TEMP/nfl-scores-candidate/artifacts" \
+            --receipt-output "$RUNNER_TEMP/nfl-scores-github-receipt.json"

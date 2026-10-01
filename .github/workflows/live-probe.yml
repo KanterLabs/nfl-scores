@@ -1,0 +1,29 @@
+name: NFL Scores live ESPN probe (mirror)
+
+on:
+  schedule:
+    - cron: '17 18 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-probe:
+    if: vars.NFL_SCORES_CANONICAL_FORGE == 'github'
+    runs-on: homelab
+    timeout-minutes: 10
+    container:
+      image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
+    steps:
+      - name: Install probe dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git nodejs
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Probe ESPN live path
+        run: node scripts/check-live.mjs

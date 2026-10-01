@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Build the exact release ZIP and its SHA-256 sidecar.
+set -Eeuo pipefail
+
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+output="$repo_dir/dist/nfl-scores@shanekanterman.shell-extension.zip"
+
+usage() {
+    cat >&2 <<'EOF'
+usage: ci/package [--output PATH]
+
+PATH must end in nfl-scores@shanekanterman.shell-extension.zip. A sibling
+.sha256 file is written next to the ZIP.
+EOF
+}
+
+while (($#)); do
+    case "$1" in
+        --output)
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            output=$2
+            shift 2
+            ;;
+        -h|--help) usage >&2; exit 0 ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+case "$output" in
+    /*) ;;
+    *) output="$repo_dir/$output" ;;
+esac
+expected_name='nfl-scores@shanekanterman.shell-extension.zip'
+[[ "$(basename -- "$output")" == "$expected_name" ]] || {
+    echo "package output must be named $expected_name" >&2
+    exit 2
+}
+
+python3 "$repo_dir/scripts/validate-release-config.py"
+
+stage=$(mktemp -d "${TMPDIR:-/tmp}/nfl-scores-package.XXXXXX")
+trap 'rm -rf -- "$stage"' EXIT
+install -d "$stage/schemas"
+for file in metadata.json extension.js scoreboard.js games.js field.js draw.js capture.js stylesheet.css; do
+    install -m 0644 "$repo_dir/$file" "$stage/$file"
+done
+install -m 0644 "$repo_dir/schemas/org.gnome.shell.extensions.nfl-scores.gschema.xml" \
+    "$stage/schemas/org.gnome.shell.extensions.nfl-scores.gschema.xml"
+glib-compile-schemas --strict "$stage/schemas"
+
+SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-0} \
+    python3 "$repo_dir/scripts/package-extension.py" \
+        --source "$stage" --output "$output" --uuid 'nfl-scores@shanekanterman'
+
+digest=$(sha256sum -- "$output")
+digest=${digest%% *}
+printf '%s  %s\n' "$digest" "$expected_name" > "$output.sha256"
+printf 'package: %s\nchecksum: %s\n' "$output" "$output.sha256"

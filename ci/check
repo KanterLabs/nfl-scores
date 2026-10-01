@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Lightweight, offline source checks for local development and CI.
+set -Eeuo pipefail
+
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$repo_dir"
+
+python3 scripts/validate-release-config.py
+
+for file in extension.js scoreboard.js games.js field.js draw.js capture.js scripts/check-fixtures.mjs; do
+    node --check --input-type=module < "$file"
+done
+
+glib-compile-schemas --strict --dry-run schemas
+node scripts/check-fixtures.mjs
+
+for file in ci/check ci/package ci/test-artifact scripts/*.sh; do
+    [[ -f "$file" ]] && bash -n "$file"
+done
+python3 -m py_compile scripts/package-extension.py scripts/validate-release-config.py scripts/verify-artifact.py
+python3 scripts/verify-artifact.py --self-test
+
+if [[ -f ci/release-tools.py ]]; then
+    echo 'shared release tool is vendored; parent integration may add its schema check here' >&2
+fi
+
+echo 'NFL Scores checks passed'
