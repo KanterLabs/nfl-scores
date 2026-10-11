@@ -18,7 +18,7 @@ concurrency:
 jobs:
   package:
     if: vars.NFL_SCORES_CANONICAL_FORGE == 'github'
-    runs-on: homelab
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     container:
       image: ubuntu:26.04@sha256:da6fc2be547864451aa253836dd926da33623312df4a9a243e35dc877c378a78
@@ -49,7 +49,7 @@ jobs:
     name: Ubuntu 26.04 / GNOME 50 harness
     needs: package
     if: vars.NFL_SCORES_CANONICAL_FORGE == 'github' && vars.NFL_SCORES_UBUNTU_GNOME_HARNESS == 'ready'
-    runs-on: homelab-heavy
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Check out source
@@ -79,7 +79,7 @@ jobs:
     name: Fedora Workstation 43 / GNOME 49 harness
     needs: package
     if: vars.NFL_SCORES_CANONICAL_FORGE == 'github' && vars.NFL_SCORES_FEDORA_GNOME_HARNESS == 'ready'
-    runs-on: homelab-heavy
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Check out source

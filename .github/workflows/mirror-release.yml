@@ -22,7 +22,7 @@ jobs:
       github.repository == 'KanterLabs/nfl-scores' &&
       github.event.repository.full_name == 'KanterLabs/nfl-scores' &&
       github.ref == 'refs/heads/main'
-    runs-on: homelab
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
