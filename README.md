@@ -128,6 +128,19 @@ gnome-extensions uninstall nfl-scores@shanekanterman
 rm -rf ~/.cache/nfl-scores
 ```
 
+### Installing a release ZIP
+
+Download the ZIP and its `.sha256` file from the release page, then verify and
+install the exact bytes:
+
+```bash
+sha256sum --check nfl-scores@shanekanterman.shell-extension.zip.sha256
+gnome-extensions install --force nfl-scores@shanekanterman.shell-extension.zip
+```
+
+Log out and back in once so GNOME Shell discovers the extension. The archive
+contains the compiled GSettings schema, so a source checkout is not required.
+
 ## Data and network use
 
 Scores come from ESPN's public endpoints. There's no account, no API key, and no tracking.
@@ -149,6 +162,10 @@ GNOME Shell caches extension code for the whole session, which normally means lo
 ```bash
 make reload        # install and reload in the running shell, no logout
 make lint          # syntax-check every module and the schema
+make check         # offline config, syntax, schema, and fixture checks
+make package       # build dist/nfl-scores@shanekanterman.shell-extension.zip
+make test-artifact # install and inspect the downloaded ZIP in an isolated prefix
+make artifact-cases # exercise malformed-artifact rejection cases
 make check-live    # print the live scoreboard and one game's detail as parsed
 make render        # draw the field and charts for saved games to /tmp/nfl-render
 make screenshots   # recapture every image in this README from the running shell
@@ -156,6 +173,30 @@ gjs -m scripts/render-fixtures.js --frames   # play animations as filmstrips
 ```
 
 `make screenshots` asks the running extension to photograph its own popup with GNOME Shell's screenshot API. It records a touchdown replay for the GIF above. While it captures, it paints a neutral backdrop behind the popup, so none of your windows end up in the images.
+
+### Release packaging
+
+The reviewed release contract lives in [`ci/release.json`](ci/release.json).
+`make package` creates the deterministic
+`nfl-scores@shanekanterman.shell-extension.zip` bundle and a sibling SHA-256
+file. The bundle contains only the extension modules, stylesheet, metadata, XML
+schema, and compiled GSettings schema; `make test-artifact` verifies that layout
+from the ZIP and installs it under an isolated XDG prefix.
+
+The shared release contract in [`ci/release.json`](ci/release.json) lists the
+ZIP and checksum assets with their stable release names. The release tag is
+the semantic version identity; GNOME also requires the integer `version` in
+`metadata.json`, which starts at `1` for the provisional `0.1.0` release and
+must increase monotonically for every later release. The runtime matrix and
+trust policy are recorded separately in [`ci/runtime.json`](ci/runtime.json).
+
+Offline fixture parsing and package checks run on the `homelab` tier. The GNOME
+runtime matrix is Ubuntu 26.04/GNOME 50 and Fedora Workstation 43/GNOME 49 on
+`homelab-heavy`; each target needs a real GNOME harness that installs and
+enables the downloaded ZIP before it is considered supported. Fedora execution
+stays pending the parent-provided VM harness. The ESPN probe
+(`node scripts/check-live.mjs`) is kept for a manual or scheduled run and is
+not part of deterministic pull-request checks.
 
 <details>
 <summary><b>Project layout</b></summary>

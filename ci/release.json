@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "project": "nfl-scores",
+  "repository": "KanterLabs/nfl-scores",
+  "tag_format": "v{version}",
+  "protected_assets": [
+    "nfl-scores@shanekanterman.shell-extension.zip",
+    "nfl-scores@shanekanterman.shell-extension.zip.sha256"
+  ],
+  "targets": [
+    {
+      "target": "gnome-extension",
+      "path": "nfl-scores@shanekanterman.shell-extension.zip",
+      "name": "nfl-scores@shanekanterman.shell-extension.zip"
+    },
+    {
+      "target": "sha256",
+      "path": "nfl-scores@shanekanterman.shell-extension.zip.sha256",
+      "name": "nfl-scores@shanekanterman.shell-extension.zip.sha256"
+    }
+  ]
+}

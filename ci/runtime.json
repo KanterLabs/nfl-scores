@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "product": "nfl-scores",
+  "version": "0.1.0",
+  "artifact": "nfl-scores@shanekanterman.shell-extension.zip",
+  "targets": [
+    {
+      "id": "ubuntu-26.04-gnome50",
+      "os": "Ubuntu 26.04",
+      "gnome_shell": "50",
+      "runner": "homelab-heavy",
+      "mode": "parent-supplied-gnome-harness",
+      "required": true
+    },
+    {
+      "id": "fedora-43-gnome49",
+      "os": "Fedora Workstation 43",
+      "gnome_shell": "49",
+      "runner": "homelab-heavy",
+      "mode": "parent-supplied-gnome-harness",
+      "required": true
+    }
+  ],
+  "live_probe": {
+    "command": "node scripts/check-live.mjs",
+    "runner": "homelab",
+    "trigger": "manual-or-scheduled"
+  },
+  "trust": {
+    "fork_pull_requests": "skip",
+    "build_credentials": "none",
+    "publish_credentials": "shared-tool-only"
+  }
+}

@@ -1,4 +1,9 @@
 schemas/gschemas.compiled
 node_modules/
+__pycache__/
 *.zip
+dist/
+.artifacts/
 fixtures/
+!fixtures/
+!fixtures/*.json

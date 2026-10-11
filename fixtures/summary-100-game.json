@@ -1,0 +1,57 @@
+{
+  "header": {
+    "competitions": [
+      {
+        "status": {"type": {"state": "in"}},
+        "competitors": [
+          {"homeAway": "away", "team": {"id": "1"}, "linescores": [{"displayValue": "7"}, {"displayValue": "0"}]},
+          {"homeAway": "home", "team": {"id": "2"}, "linescores": [{"displayValue": "3"}, {"displayValue": "7"}]}
+        ]
+      }
+    ]
+  },
+  "boxscore": {
+    "teams": [
+      {"team": {"id": "1"}, "statistics": [
+        {"name": "totalYards", "displayValue": "188"},
+        {"name": "netPassingYards", "displayValue": "132"},
+        {"name": "rushingYards", "displayValue": "56"}
+      ]},
+      {"team": {"id": "2"}, "statistics": [
+        {"name": "totalYards", "displayValue": "214"},
+        {"name": "netPassingYards", "displayValue": "161"},
+        {"name": "rushingYards", "displayValue": "53"}
+      ]}
+    ]
+  },
+  "scoringPlays": [
+    {"period": {"number": 1}, "clock": {"displayValue": "04:22"}, "team": {"id": "2"}, "type": {"abbreviation": "FG"}, "text": "37 yard field goal", "awayScore": 0, "homeScore": 3}
+  ],
+  "drives": {
+    "previous": [
+      {
+        "id": "drive-1",
+        "team": {"id": "1"},
+        "description": "Jets drive",
+        "start": {"yardLine": 25, "period": {"number": 1}},
+        "end": {"yardLine": 62},
+        "displayResult": "Punt",
+        "plays": [
+          {"id": "play-1", "period": {"number": 1}, "clock": {"displayValue": "12:00"}, "start": {"team": {"id": "1"}, "down": 1, "distance": 10, "shortDownDistanceText": "1st & 10", "yardLine": 25}, "end": {"team": {"id": "1"}, "down": 2, "distance": 6, "yardLine": 29}, "statYardage": 4, "type": {"text": "Rush"}, "text": "Player rushes 4 yards", "scoringPlay": false},
+          {"id": "play-2", "period": {"number": 1}, "clock": {"displayValue": "11:20"}, "start": {"team": {"id": "1"}, "down": 2, "distance": 6, "shortDownDistanceText": "2nd & 6", "yardLine": 29}, "end": {"team": {"id": "1"}, "down": 1, "distance": 10, "yardLine": 42}, "statYardage": 13, "type": {"text": "Pass"}, "text": "Player pass complete for 13 yards", "scoringPlay": false}
+        ]
+      }
+    ],
+    "current": {
+      "id": "drive-2",
+      "team": {"id": "2"},
+      "description": "Bills drive",
+      "start": {"yardLine": 35, "period": {"number": 2}},
+      "plays": [
+        {"id": "play-3", "period": {"number": 2}, "clock": {"displayValue": "10:30"}, "start": {"team": {"id": "2"}, "down": 1, "distance": 10, "shortDownDistanceText": "1st & 10", "yardLine": 35}, "end": {"team": {"id": "2"}, "down": 2, "distance": 4, "yardLine": 44}, "statYardage": 6, "type": {"text": "Pass"}, "text": "Player pass complete for 6 yards", "scoringPlay": false}
+      ]
+    }
+  },
+  "winprobability": [{"playId": "play-3", "homeWinPercentage": 0.61}],
+  "predictor": {"homeTeam": {"gameProjection": "52.0"}}
+}

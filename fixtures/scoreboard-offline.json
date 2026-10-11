@@ -1,0 +1,60 @@
+{
+  "week": {"number": 1},
+  "season": {"type": 2},
+  "events": [
+    {
+      "id": "100",
+      "date": "2026-09-13T17:00Z",
+      "status": {
+        "period": 2,
+        "displayClock": "10:00",
+        "type": {
+          "state": "in",
+          "name": "STATUS_IN_PROGRESS",
+          "shortDetail": "Q2 10:00"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "away",
+              "team": {
+                "id": "1",
+                "abbreviation": "NYJ",
+                "shortDisplayName": "Jets",
+                "color": "125740",
+                "alternateColor": "ffffff"
+              },
+              "score": "7",
+              "records": [{"summary": "1-0"}]
+            },
+            {
+              "homeAway": "home",
+              "team": {
+                "id": "2",
+                "abbreviation": "BUF",
+                "shortDisplayName": "Bills",
+                "color": "00338d",
+                "alternateColor": "c60c30"
+              },
+              "score": "10",
+              "records": [{"summary": "1-0"}]
+            }
+          ],
+          "situation": {
+            "possession": "2",
+            "down": 2,
+            "distance": 4,
+            "yardLine": 44,
+            "downDistanceText": "2nd & 4",
+            "isRedZone": false,
+            "awayTimeouts": 3,
+            "homeTimeouts": 2
+          },
+          "broadcasts": [{"names": ["ESPN"]}]
+        }
+      ]
+    }
+  ]
+}

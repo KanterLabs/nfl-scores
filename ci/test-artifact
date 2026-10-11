@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Black-box checks for the packaged extension.  The command intentionally
+# consumes a ZIP like a downloader would; it does not inspect the source tree.
+set -Eeuo pipefail
+
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+verify="$repo_dir/scripts/verify-artifact.py"
+
+usage() {
+    cat >&2 <<'EOF'
+usage: ci/test-artifact ARTIFACT.zip [--self-test] [--runtime] [--target TARGET]
+
+ARTIFACT.zip is the downloaded shell-extension bundle. --self-test exercises
+the verifier's rejection cases against deliberately malformed bundles.
+--runtime checks the installed bundle against the Ubuntu target using the
+local package/render smoke; Fedora is accepted only by the parent VM harness.
+EOF
+}
+
+artifact=
+self_test=false
+runtime=false
+target=${NFL_SCORES_TARGET:-}
+while (($#)); do
+    case "$1" in
+        --self-test) self_test=true; shift ;;
+        --runtime) runtime=true; shift ;;
+        --target)
+            [[ $# -ge 2 ]] || { usage; exit 2; }
+            target=$2
+            shift 2
+            ;;
+        -h|--help) usage >&2; exit 0 ;;
+        -*) usage; exit 2 ;;
+        *)
+            [[ -z "$artifact" ]] || { usage; exit 2; }
+            artifact=$1
+            shift
+            ;;
+    esac
+done
+
+if [[ "$self_test" == true ]]; then
+    exec python3 "$verify" --self-test
+fi
+
+[[ -n "$artifact" ]] || { usage; exit 2; }
+python3 "$verify" "$artifact"
+checksum="${artifact}.sha256"
+if [[ -L "$checksum" ]]; then
+    echo 'artifact checksum must not be a symlink' >&2
+    exit 1
+fi
+if [[ -f "$checksum" ]]; then
+    (cd "$(dirname -- "$checksum")" && sha256sum --check "$(basename -- "$checksum")")
+fi
+
+if [[ "$runtime" == true ]]; then
+    case "$target" in
+        ubuntu-26.04-gnome50) expected_os=ubuntu; expected_os_version=26.04; expected_major=50 ;;
+        fedora-43-gnome49)
+            echo 'runtime artifact test: Fedora requires the parent-supplied disposable GNOME harness; host checks are refused' >&2
+            exit 2
+            ;;
+        '') echo 'runtime artifact test: set --target or NFL_SCORES_TARGET' >&2; exit 2 ;;
+        *) echo "runtime artifact test: unknown target: $target" >&2; exit 2 ;;
+    esac
+    [[ -r /etc/os-release ]] || { echo 'runtime artifact test: /etc/os-release is unavailable' >&2; exit 2; }
+    # shellcheck disable=SC1091
+    source /etc/os-release
+    [[ "${ID:-}" == "$expected_os" && "${VERSION_ID:-}" == "$expected_os_version" ]] || {
+        echo "runtime artifact test: target $target requires $expected_os $expected_os_version (found ${ID:-unknown} ${VERSION_ID:-unknown})" >&2
+        exit 2
+    }
+    target_major=${NFL_SCORES_GNOME_MAJOR:-}
+    if [[ -z "$target_major" ]]; then
+        if ! command -v gnome-shell >/dev/null 2>&1; then
+            echo 'runtime artifact test: gnome-shell is unavailable; set NFL_SCORES_GNOME_MAJOR in a target harness' >&2
+            exit 2
+        fi
+        target_major=$(gnome-shell --version | sed -n 's/.* \([0-9][0-9]*\)\..*/\1/p')
+    fi
+    [[ "$target_major" == "$expected_major" ]] || {
+        echo "runtime artifact test: target $target requires GNOME $expected_major (found $target_major)" >&2
+        exit 2
+    }
+    [[ "$target_major" =~ ^[0-9]+$ ]] || { echo 'runtime artifact test: invalid GNOME target' >&2; exit 2; }
+
+    install_root=$(mktemp -d "${TMPDIR:-/tmp}/nfl-scores-artifact-install.XXXXXX")
+    trap 'rm -rf -- "$install_root"' EXIT
+    export HOME="$install_root/home"
+    export XDG_DATA_HOME="$HOME/.local/share"
+    export XDG_CONFIG_HOME="$HOME/.config"
+    export XDG_CACHE_HOME="$HOME/.cache"
+    mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+    command -v gnome-extensions >/dev/null 2>&1 || {
+        echo 'runtime artifact test: gnome-extensions is unavailable' >&2
+        exit 2
+    }
+    gnome-extensions install --force "$artifact"
+    installed="$XDG_DATA_HOME/gnome-shell/extensions/nfl-scores@shanekanterman"
+    [[ -f "$installed/metadata.json" ]] || { echo 'runtime artifact test: GNOME install did not create metadata' >&2; exit 1; }
+    [[ -f "$installed/schemas/gschemas.compiled" ]] || { echo 'runtime artifact test: installed schema is not compiled' >&2; exit 1; }
+    command -v gjs >/dev/null 2>&1 || { echo 'runtime artifact test: gjs is unavailable for fixture rendering' >&2; exit 2; }
+    evidence_dir=${NFL_SCORES_EVIDENCE_DIR:-$repo_dir/.artifacts/nfl-scores-$target}
+    mkdir -p "$evidence_dir"
+    gjs -m "$repo_dir/scripts/render-fixtures.js" \
+        --module-dir "$installed" --output-dir "$evidence_dir" "$repo_dir/fixtures"
+    compgen -G "$evidence_dir/*.png" >/dev/null || {
+        echo "runtime artifact test: no screenshot evidence was produced in $evidence_dir" >&2
+        exit 1
+    }
+    echo "runtime artifact test: installed for $target at isolated prefix; evidence=$evidence_dir"
+fi

@@ -1,13 +1,11 @@
 // Render the gamecast drawings for every saved fixture to /tmp/nfl-render/*.png
 // so the field can be checked without GNOME Shell. Run with gjs:
-//   gjs -m scripts/render-fixtures.js [--frames] [fixtures dir]
+//   gjs -m scripts/render-fixtures.js [--frames] [--module-dir DIR]
+//       [--output-dir DIR] [fixtures dir]
 // --frames also draws play animations as filmstrips (one row per moment).
 import Cairo from 'cairo';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-
-import {parseScoreboard, parseGamecast, fieldState, replayStates, playEvent} from '../games.js';
-import {drawField, drawWinProbability, drawDriveChart, driveChartHeight} from '../draw.js';
 
 const WIDTH = 708;
 const FIELD_HEIGHT = 200;
@@ -16,9 +14,28 @@ const GAP = 14;
 
 const decoder = new TextDecoder();
 const read = path => JSON.parse(decoder.decode(GLib.file_get_contents(path)[1]));
-const frames = ARGV.includes('--frames');
-const dir = ARGV.filter(a => !a.startsWith('--'))[0] ?? `${GLib.path_get_dirname(import.meta.url.replace('file://', ''))}/../fixtures`;
-const out = '/tmp/nfl-render';
+const positional = [];
+let frames = false;
+let moduleDir = null;
+let out = '/tmp/nfl-render';
+for (let i = 0; i < ARGV.length; i++) {
+    const arg = ARGV[i];
+    if (arg === '--frames') {
+        frames = true;
+    } else if (arg === '--module-dir') {
+        moduleDir = ARGV[++i];
+    } else if (arg === '--output-dir') {
+        out = ARGV[++i];
+    } else if (!arg.startsWith('--')) {
+        positional.push(arg);
+    }
+}
+const scriptDir = GLib.path_get_dirname(import.meta.url.replace('file://', ''));
+moduleDir ??= GLib.build_filenamev([scriptDir, '..']);
+const moduleUri = name => GLib.filename_to_uri(GLib.build_filenamev([moduleDir, name]), null);
+const {parseScoreboard, parseGamecast, fieldState, replayStates, playEvent} = await import(moduleUri('games.js'));
+const {drawField, drawWinProbability, drawDriveChart, driveChartHeight} = await import(moduleUri('draw.js'));
+const dir = positional[0] ?? `${scriptDir}/../fixtures`;
 GLib.mkdir_with_parents(out, 0o755);
 
 const files = [];
